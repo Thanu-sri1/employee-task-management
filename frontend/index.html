@@ -1,13 +1,237 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Task Manager</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #eef2f7;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 0 20px;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #333;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 12px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #4b6cb7;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #182848;
+        }
+
+        pre {
+            background: #f6f8fa;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 180px;
+            overflow: auto;
+            font-size: 13px;
+        }
+
+        .footer {
+            text-align: center;
+            margin: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    Employee Task & Issue Management System
+</div>
+
+<div class="container">
+
+    <!-- Add Employee -->
+    <div class="card">
+        <h2>Add Employee</h2>
+        <input id="empName" placeholder="Employee Name">
+        <input id="empRole" placeholder="Employee Role">
+        <button onclick="addEmployee()">Add Employee</button>
+    </div>
+
+    <!-- View Employees -->
+    <div class="card">
+        <h2>Employees</h2>
+        <button onclick="getEmployees()">Load Employees</button>
+        <pre id="empList"></pre>
+    </div>
+
+    <!-- Add Task -->
+    <div class="card">
+        <h2>Add Task</h2>
+        <input id="taskTitle" placeholder="Task Title">
+        <select id="taskEmpId"></select>
+        <button onclick="addTask()">Assign Task</button>
+    </div>
+
+    <!-- View Tasks -->
+    <div class="card">
+        <h2>Tasks</h2>
+        <button onclick="getTasks()">Load Tasks</button>
+        <pre id="taskList"></pre>
+    </div>
+
+    <!-- Update Task Status -->
+    <div class="card">
+        <h2>Update Task Status</h2>
+        <input id="statusTaskId" placeholder="Task ID">
+        <select id="taskStatus">
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+        </select>
+        <button onclick="updateStatus()">Update Status</button>
+    </div>
+
+    <!-- Report Issue -->
+    <div class="card">
+        <h2>Report Issue</h2>
+        <input id="issueDesc" placeholder="Issue Description">
+        <input id="issueTaskId" placeholder="Task ID">
+        <button onclick="addIssue()">Report Issue</button>
+    </div>
+
+</div>
+
+<div class="footer">
+    Built using HTML, CSS, JavaScript & FastAPI
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+// Load employees dropdown
+function loadEmployees() {
+    fetch(API + "/employees/")
+        .then(res => res.json())
+        .then(data => {
+            let dropdown = document.getElementById("taskEmpId");
+            dropdown.innerHTML = "";
+            data.forEach(emp => {
+                let option = document.createElement("option");
+                option.value = emp.id;
+                option.text = emp.name + " (" + emp.role + ")";
+                dropdown.add(option);
+            });
+        });
+}
+
+function addEmployee() {
+    fetch(API + "/employees/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            name: empName.value,
+            role: empRole.value
+        })
+    }).then(() => {
+        alert("Employee added successfully");
+        loadEmployees();
+    });
+}
+
+function getEmployees() {
+    fetch(API + "/employees/")
+        .then(res => res.json())
+        .then(data => empList.textContent = JSON.stringify(data, null, 2));
+}
+
+function addTask() {
+    fetch(API + "/tasks/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            title: taskTitle.value,
+            employee_id: taskEmpId.value
+        })
+    }).then(() => alert("Task assigned"));
+}
+
+function getTasks() {
+    fetch(API + "/tasks/")
+        .then(res => res.json())
+        .then(data => taskList.textContent = JSON.stringify(data, null, 2));
+}
+
+function updateStatus() {
+    fetch(API + "/tasks/" + statusTaskId.value, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            status: taskStatus.value
+        })
+    }).then(() => alert("Status updated"));
+}
+
+function addIssue() {
+    fetch(API + "/issues/", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            description: issueDesc.value,
+            task_id: issueTaskId.value
+        })
+    }).then(() => alert("Issue reported"));
+}
+
+window.onload = loadEmployees;
+</script>
+
+</body>
 </html>
